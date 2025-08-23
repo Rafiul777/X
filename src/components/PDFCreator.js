@@ -1266,4 +1266,199 @@ Thank you for using PDF Creator Pro!</textarea>
     
     pdf.save(`${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_resume.pdf`)
   }
+
+  generatePhotoPDF() {
+    const title = document.getElementById('pdf-photo-title')?.value || 'Photo Collection'
+    const layout = document.getElementById('photo-layout')?.value || 'single'
+    const quality = document.getElementById('photo-quality')?.value || 'medium'
+    const includeFilenames = document.getElementById('include-filenames')?.checked || false
+
+    if (this.uploadedPhotos.length === 0) {
+      alert('Please upload at least one photo')
+      return
+    }
+    const pdf = new jsPDF()
+    let currentPage = 1
+    
+    // Quality settings
+    const qualityMap = {
+      high: 1.0,
+      medium: 0.7,
+      low: 0.4
+    }
+    const imageQuality = qualityMap[quality]
+    
+    // Page dimensions
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const margin = 20
+    const usableWidth = pageWidth - (margin * 2)
+    const usableHeight = pageHeight - (margin * 2)
+    
+    // Title on first page
+    pdf.setFontSize(18)
+    pdf.setFont(undefined, 'bold')
+    pdf.text(title, margin, margin + 15)
+    
+    let yPosition = margin + 40
+    let photosProcessed = 0
+    
+    const processPhotos = () => {
+      if (layout === 'single') {
+        // One photo per page
+        this.uploadedPhotos.forEach((photo, index) => {
+          if (index > 0) {
+            pdf.addPage()
+            yPosition = margin
+          }
+          
+          const img = new Image()
+          img.onload = () => {
+            const imgWidth = img.width
+            const imgHeight = img.height
+            const aspectRatio = imgWidth / imgHeight
+            
+            let displayWidth = usableWidth
+            let displayHeight = displayWidth / aspectRatio
+            
+            if (displayHeight > usableHeight - (includeFilenames ? 30 : 0)) {
+              displayHeight = usableHeight - (includeFilenames ? 30 : 0)
+              displayWidth = displayHeight * aspectRatio
+            }
+            
+            const xPos = margin + (usableWidth - displayWidth) / 2
+            
+            pdf.addImage(photo.dataUrl, 'JPEG', xPos, yPosition, displayWidth, displayHeight, undefined, 'MEDIUM')
+            
+            if (includeFilenames) {
+              pdf.setFontSize(10)
+              pdf.setFont(undefined, 'normal')
+              pdf.text(photo.name, margin, yPosition + displayHeight + 15)
+            }
+            
+            photosProcessed++
+            if (photosProcessed === this.uploadedPhotos.length) {
+              pdf.save(`${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`)
+            }
+          }
+          img.src = photo.dataUrl
+        })
+      } else if (layout === 'grid-2x2') {
+        // 2x2 grid - 4 photos per page
+        const photosPerPage = 4
+        const cols = 2
+        const rows = 2
+        const photoWidth = (usableWidth - 10) / cols
+        const photoHeight = (usableHeight - 40 - 10) / rows
+        
+        for (let i = 0; i < this.uploadedPhotos.length; i += photosPerPage) {
+          if (i > 0) {
+            pdf.addPage()
+            yPosition = margin + 40
+          }
+          
+          const pagePhotos = this.uploadedPhotos.slice(i, i + photosPerPage)
+          pagePhotos.forEach((photo, index) => {
+            const col = index % cols
+            const row = Math.floor(index / cols)
+            const xPos = margin + col * (photoWidth + 5)
+            const yPos = yPosition + row * (photoHeight + 5)
+            
+            pdf.addImage(photo.dataUrl, 'JPEG', xPos, yPos, photoWidth, photoHeight, undefined, 'MEDIUM')
+            
+            if (includeFilenames) {
+              pdf.setFontSize(8)
+              pdf.setFont(undefined, 'normal')
+              const textWidth = pdf.getTextWidth(photo.name)
+              if (textWidth > photoWidth) {
+                const truncated = photo.name.substring(0, Math.floor(photo.name.length * photoWidth / textWidth)) + '...'
+                pdf.text(truncated, xPos, yPos + photoHeight + 10)
+              } else {
+                pdf.text(photo.name, xPos, yPos + photoHeight + 10)
+              }
+            }
+          })
+        }
+        
+        pdf.save(`${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`)
+      } else if (layout === 'grid-3x3') {
+        // 3x3 grid - 9 photos per page
+        const photosPerPage = 9
+        const cols = 3
+        const rows = 3
+        const photoWidth = (usableWidth - 20) / cols
+        const photoHeight = (usableHeight - 40 - 20) / rows
+        
+        for (let i = 0; i < this.uploadedPhotos.length; i += photosPerPage) {
+          if (i > 0) {
+            pdf.addPage()
+            yPosition = margin + 40
+          }
+          
+          const pagePhotos = this.uploadedPhotos.slice(i, i + photosPerPage)
+          pagePhotos.forEach((photo, index) => {
+            const col = index % cols
+            const row = Math.floor(index / cols)
+            const xPos = margin + col * (photoWidth + 5)
+            const yPos = yPosition + row * (photoHeight + 5)
+            
+            pdf.addImage(photo.dataUrl, 'JPEG', xPos, yPos, photoWidth, photoHeight, undefined, 'MEDIUM')
+            
+            if (includeFilenames) {
+              pdf.setFontSize(6)
+              pdf.setFont(undefined, 'normal')
+              const textWidth = pdf.getTextWidth(photo.name)
+              if (textWidth > photoWidth) {
+                const truncated = photo.name.substring(0, Math.floor(photo.name.length * photoWidth / textWidth)) + '...'
+                pdf.text(truncated, xPos, yPos + photoHeight + 8)
+              } else {
+                pdf.text(photo.name, xPos, yPos + photoHeight + 8)
+              }
+            }
+          })
+        }
+        
+        pdf.save(`${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`)
+      } else {
+        // Collage layout - auto-fit
+        const photosPerPage = 6
+        
+        for (let i = 0; i < this.uploadedPhotos.length; i += photosPerPage) {
+          if (i > 0) {
+            pdf.addPage()
+            yPosition = margin + 40
+          }
+          
+          const pagePhotos = this.uploadedPhotos.slice(i, i + photosPerPage)
+          const photoWidth = usableWidth / 3
+          const photoHeight = (usableHeight - 40) / 2
+          
+          pagePhotos.forEach((photo, index) => {
+            const col = index % 3
+            const row = Math.floor(index / 3)
+            const xPos = margin + col * photoWidth
+            const yPos = yPosition + row * photoHeight
+            
+            pdf.addImage(photo.dataUrl, 'JPEG', xPos, yPos, photoWidth - 5, photoHeight - 5, undefined, 'MEDIUM')
+            
+            if (includeFilenames) {
+              pdf.setFontSize(8)
+              pdf.setFont(undefined, 'normal')
+              const textWidth = pdf.getTextWidth(photo.name)
+              if (textWidth > photoWidth - 5) {
+                const truncated = photo.name.substring(0, Math.floor(photo.name.length * (photoWidth - 5) / textWidth)) + '...'
+                pdf.text(truncated, xPos, yPos + photoHeight - 15)
+              } else {
+                pdf.text(photo.name, xPos, yPos + photoHeight - 15)
+              }
+            }
+          })
+        }
+        
+        pdf.save(`${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`)
+      }
+    }
+    
+    processPhotos()
+  }
 }

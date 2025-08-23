@@ -16,6 +16,8 @@ export class PDFCreator {
         return this.renderInvoiceGenerator()
       case 'resume':
         return this.renderResumeBuilder()
+      case 'photo':
+        return this.renderPhotoToPDF()
       default:
         return this.renderTextToPDF()
     }
@@ -482,6 +484,102 @@ Thank you for using PDF Creator Pro!</textarea>
     `
   }
 
+  renderPhotoToPDF() {
+    return `
+      <div class="pdf-creator">
+        <div class="creator-header">
+          <h2>Photo to PDF Converter</h2>
+          <p>Upload images and convert them into a professional PDF document</p>
+        </div>
+        
+        <div class="creator-content">
+          <div class="input-section">
+            <div class="form-group">
+              <label for="pdf-photo-title">Document Title</label>
+              <input type="text" id="pdf-photo-title" placeholder="Enter document title..." value="Photo Collection">
+            </div>
+            
+            <div class="form-group">
+              <label for="photo-upload">Upload Photos</label>
+              <input type="file" id="photo-upload" accept="image/*" multiple class="file-input">
+              <div class="upload-area" id="upload-area">
+                <div class="upload-content">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="upload-icon">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17,8 12,3 7,8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <p>Click to upload photos or drag and drop</p>
+                  <p class="upload-hint">Supports JPG, PNG, GIF, WebP</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="photo-layout">Layout</label>
+                <select id="photo-layout">
+                  <option value="single">One photo per page</option>
+                  <option value="grid-2x2">2x2 Grid (4 photos per page)</option>
+                  <option value="grid-3x3">3x3 Grid (9 photos per page)</option>
+                  <option value="collage">Auto-fit collage</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="photo-quality">Image Quality</label>
+                <select id="photo-quality">
+                  <option value="high">High Quality</option>
+                  <option value="medium" selected>Medium Quality</option>
+                  <option value="low">Low Quality (smaller file)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="include-filenames"> Include filenames as captions
+              </label>
+            </div>
+            
+            <div id="photo-list" class="photo-list"></div>
+          </div>
+          
+          <div class="preview-section">
+            <h3>Preview</h3>
+            <div class="pdf-preview" id="photo-preview">
+              <div class="preview-content">
+                <h1>Photo Collection</h1>
+                <div class="photo-preview-content">
+                  <div class="preview-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21,15 16,10 5,21"/>
+                    </svg>
+                    <p>Upload photos to see preview</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="creator-actions">
+          <button class="btn btn-primary" id="generate-photo-pdf" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7,10 12,15 17,10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Generate PDF
+          </button>
+          <button class="btn btn-secondary" id="clear-photos">Clear All Photos</button>
+        </div>
+      </div>
+    `
+  }
+
   attachEventListeners(view) {
     switch (view) {
       case 'text':
@@ -495,6 +593,9 @@ Thank you for using PDF Creator Pro!</textarea>
         break
       case 'resume':
         this.attachResumeEventListeners()
+        break
+      case 'photo':
+        this.attachPhotoEventListeners()
         break
     }
   }
